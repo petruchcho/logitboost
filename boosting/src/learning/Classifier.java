@@ -1,4 +1,4 @@
-package classifying;
+package learning;
 
 import data.ClassifiedData;
 import data.Data;

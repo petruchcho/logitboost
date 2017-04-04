@@ -1,12 +1,12 @@
-package classifying;
+package learning.regressors;
 
-import data.ClassifiedData;
 import data.Data;
+import data.RegressionData;
 
 import java.util.List;
 
 public interface Regressor {
-    void train(List<ClassifiedData> data);
+    void train(List<RegressionData> data);
 
     double regress(Data data);
 }

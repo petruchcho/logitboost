@@ -1,7 +1,7 @@
-package classifying;
+package learning.regressors;
 
-import data.ClassifiedData;
 import data.Data;
+import data.RegressionData;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public class WeightedRegressor implements Regressor {
     }
 
     @Override
-    public void train(List<ClassifiedData> data) {
+    public void train(List<RegressionData> data) {
         regressor.train(data);
     }
 

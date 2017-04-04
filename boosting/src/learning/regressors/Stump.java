@@ -1,7 +1,8 @@
-package classifying;
+package learning.regressors;
 
-import data.ClassifiedData;
 import data.Data;
+import data.RegressionData;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,23 +18,24 @@ public class Stump implements Regressor {
 
     public Stump(int argId) {
         this.argId = argId;
+        throw new NotImplementedException();
     }
 
     @Override
-    public void train(List<ClassifiedData> data) {
-        List<ClassifiedData> sortedData = new ArrayList<>(data);
+    public void train(List<RegressionData> data) {
+        List<RegressionData> sortedData = new ArrayList<>(data);
         sortedData.sort(Comparator.comparingDouble(o -> o.asVector()[argId]));
         int firstClassCount = 0;
-        for (ClassifiedData dataInstance : sortedData) {
-            if (dataInstance.getClassId() == 1) {
+        for (RegressionData dataInstance : sortedData) {
+            if (dataInstance.output() == 1) {
                 firstClassCount++;
             }
         }
         t = sortedData.get(0).asVector()[argId] - 0.5;
         int bestCorrect = firstClassCount;
         int currentCorrect = firstClassCount;
-        for (ClassifiedData dataInstance : sortedData) {
-            if (dataInstance.getClassId() == 1) {
+        for (RegressionData dataInstance : sortedData) {
+            if (dataInstance.output() == 1) {
                 currentCorrect--;
             } else {
                 currentCorrect++;

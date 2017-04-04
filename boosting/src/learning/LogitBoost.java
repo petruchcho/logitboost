@@ -1,7 +1,10 @@
-package classifying;
+package learning;
 
 import data.ClassifiedData;
 import data.Data;
+import learning.regressors.Regressor;
+import learning.regressors.RegressorFactory;
+import learning.regressors.WeightedRegressor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,19 +33,7 @@ public class LogitBoost implements Classifier {
     @Override
     public void train(List<ClassifiedData> dataSet) {
         weakLearners.clear();
-        for (int iteration = 0; iteration < iterations; iteration++) {
-            for (ClassifiedData dataInstance : dataSet) {
-                double probability = calculateProbability(dataInstance);
-                double z;
-                if (dataInstance.getClassId() == 1) {
-                    z = Math.min(3, 1 / probability);
-                } else {
-                    z = Math.max(-3, -1 / (1 - probability));
-                }
-                double weight = Math.max(0, probability * (1 - probability));
 
-            }
-        }
     }
 
     private WeightedRegressor createWeightedRegressor() {
