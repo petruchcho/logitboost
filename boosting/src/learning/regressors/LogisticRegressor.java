@@ -1,6 +1,5 @@
 package learning.regressors;
 
-import data.ClassifiedData;
 import data.Data;
 import data.RegressionData;
 import utils.LogisticUtils;
@@ -47,7 +46,7 @@ public class LogisticRegressor implements Regressor {
      */
     @Override
     public double regress(Data data) {
-        return f(MatrixUtils.multiply(c, data.asVector()));
+        return 2 * f(MatrixUtils.multiply(c, data.asVector())) - 1;
     }
 
     private double f(double z) {

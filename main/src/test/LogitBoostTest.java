@@ -2,25 +2,23 @@ package test;
 
 import data.ClassifiedData;
 import data.DataHolder;
-import data.RegressionData;
-import data.RegressionDataDecorator;
-import iris.Iris;
-import iris.IrisReader;
+import learning.LogitBoost;
 import learning.regressors.LogisticRegressor;
+import seed.SeedReader;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class LogisticRegressorTest {
+public class LogitBoostTest {
 
-    private static final int TRAIN_PERCENT = 90;
+    private static final int TRAIN_PERCENT = 100;
 
     public static void main(String[] args) {
-        DataHolder<Iris> dataHolder = new DataHolder<>(new IrisReader());
+        DataHolder<? extends ClassifiedData> dataHolder = new DataHolder<>(new SeedReader());
         dataHolder.normalize();
 
-        List<RegressionData> trainData = new ArrayList<>();
+        List<ClassifiedData> trainData = new ArrayList<>();
         List<ClassifiedData> testData = new ArrayList<>();
 
         List<ClassifiedData> filteredData = new ArrayList<>();
@@ -32,30 +30,18 @@ public class LogisticRegressorTest {
 
         Collections.shuffle(filteredData);
         for (ClassifiedData data : filteredData) {
-            if (trainData.size() < filteredData.size() * TRAIN_PERCENT / 100.0) {
-                trainData.add(new RegressionDataDecorator(data));
+            if (trainData.size() * 100 < filteredData.size() * TRAIN_PERCENT) {
+                trainData.add(data);
             } else {
                 testData.add(data);
             }
         }
 
+        LogitBoost logitBoost = new LogitBoost(1000, () -> new LogisticRegressor(dataHolder.getVectorSize(), 0.5, 200));
+        logitBoost.train(trainData);
 
-        LogisticRegressor regressor = new LogisticRegressor(dataHolder.getVectorSize(), 0.1, 300);
-        regressor.train(trainData);
-
-        int correctly = 0;
-        for (ClassifiedData data : testData) {
-            double regress = regressor.regress(data);
-            if (regress > 1 - regress) {
-                if (data.getClassId() == 1) {
-                    correctly++;
-                }
-            } else {
-                if (data.getClassId() == 0) {
-                    correctly++;
-                }
-            }
+        for (ClassifiedData data : trainData) {
+            System.err.printf("{%s} -> %.5f\n", data.getClassId(), logitBoost.p(data));
         }
-        System.err.printf("orrectly = %.2f\n", 100.0 * correctly / testData.size());
     }
 }

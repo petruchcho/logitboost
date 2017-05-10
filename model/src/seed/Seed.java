@@ -56,6 +56,6 @@ public class Seed implements data.ClassifiedData {
 
     @Override
     public int getClassId() {
-        return classId;
+        return classId - 1;
     }
 }

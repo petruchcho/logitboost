@@ -1,7 +1,6 @@
 package learning;
 
-import data.ClassifiedData;
-import data.Data;
+import data.*;
 import learning.regressors.Regressor;
 import learning.regressors.RegressorFactory;
 import learning.regressors.WeightedRegressor;
@@ -23,38 +22,66 @@ public class LogitBoost implements Classifier {
 
     @Override
     public double[] classify(Data dataInstance) {
-        double probability = calculateProbability(dataInstance);
-        return new double[]{
-                1 - probability,
-                probability
-        };
+        return null;
+    }
+
+    public double F(Data data) {
+        double sum = 0;
+        for (Regressor regressor : weakLearners) {
+            sum += regressor.regress(data);
+        }
+        return sum;
     }
 
     @Override
     public void train(List<ClassifiedData> dataSet) {
         weakLearners.clear();
+        for (int i = 0; i < iterations; i++) {
+            List<RegressionData> regressionData = new ArrayList<>();
 
-    }
+            for (ClassifiedData data : dataSet) {
+                double p = p(data);
+                double z = (data.getClassId() - p) / (p * (1 - p));
+                double w = p * (1 - p);
+                regressionData.add(new WeightedData(new RegressionDataPoint(data, z), w));
+            }
 
-    private WeightedRegressor createWeightedRegressor() {
-        return new WeightedRegressor(regressorFactory.createInstance());
-    }
+            WeightedRegressor regressor = new WeightedRegressor(createRegressor());
+            regressor.train(regressionData);
+            regressor.setWeight(0.5);
+            weakLearners.add(regressor);
 
-    private double calculateProbability(Data x) {
-        double fx = F(x);
-        double efx = Math.exp(fx);
-        double enfx = Math.exp(-fx);
-        if (Double.isInfinite(efx) && efx > 0 && enfx < 1e-15)//Well classified point could return a Infinity which turns into NaN
-            return 1.0;
-        return efx / (efx + enfx);
-    }
-
-    private double F(Data dataInstance) {
-        double fx = 0.0; //0 so when we are uninitalized calculateProbability will return 0.5
-        for (Regressor fm : weakLearners) {
-            fx += fm.regress(dataInstance);
+            System.out.printf("Iteration = %s, error = %.2f\n", i + 1, calculateError(dataSet));
         }
+    }
 
-        return fx * 0.5;
+    private double calculateError(List<ClassifiedData> dataSet) {
+        int correct = 0;
+        for (ClassifiedData data : dataSet) {
+            if (data.getClassId() == classifyInternal(data)) {
+                correct++;
+            }
+        }
+        return 100.0 * correct / dataSet.size();
+    }
+
+    /**
+     * 0 - 1
+     */
+    private int classifyInternal(Data x) {
+        if (p(x) > 0.5) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public double p(Data x) {
+        double F = F(x);
+        return Math.exp(F) / (Math.exp(F) + Math.exp(-F));
+    }
+
+    private Regressor createRegressor() {
+        return regressorFactory.createInstance();
     }
 }

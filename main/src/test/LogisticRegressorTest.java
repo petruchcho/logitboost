@@ -1,3 +1,5 @@
+package test;
+
 import data.ClassifiedData;
 import data.DataHolder;
 import data.RegressionData;
@@ -10,9 +12,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Runner {
+public class LogisticRegressorTest {
 
-    private static final int TRAIN_PERCENT = 60;
+    private static final int TRAIN_PERCENT = 90;
 
     public static void main(String[] args) {
         DataHolder<Iris> dataHolder = new DataHolder<>(new IrisReader());
@@ -30,7 +32,7 @@ public class Runner {
 
         Collections.shuffle(filteredData);
         for (ClassifiedData data : filteredData) {
-            if (trainData.size() < filteredData.size() * 60 / 100.0) {
+            if (trainData.size() < filteredData.size() * TRAIN_PERCENT / 100.0) {
                 trainData.add(new RegressionDataDecorator(data));
             } else {
                 testData.add(data);
