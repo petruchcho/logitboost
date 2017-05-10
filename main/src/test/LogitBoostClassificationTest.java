@@ -1,8 +1,9 @@
 package test;
 
 import data.ClassifiedData;
-import data.DataHolder;
+import data.dataholder.DataHolder;
 import learning.LogitBoost;
+import learning.classification.ClassificationModel;
 import learning.regressors.LogisticRegressor;
 import seed.SeedReader;
 
@@ -10,12 +11,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class LogitBoostTest {
+public class LogitBoostClassificationTest {
 
-    private static final int TRAIN_PERCENT = 100;
+    private static final int TRAIN_PERCENT = 80;
 
     public static void main(String[] args) {
-        DataHolder<? extends ClassifiedData> dataHolder = new DataHolder<>(new SeedReader());
+        DataHolder<? extends ClassifiedData> dataHolder = new DataHolder<>(new SeedReader(), trainPercent, shuffle);
         dataHolder.normalize();
 
         List<ClassifiedData> trainData = new ArrayList<>();
@@ -37,11 +38,12 @@ public class LogitBoostTest {
             }
         }
 
-        LogitBoost logitBoost = new LogitBoost(1000, () -> new LogisticRegressor(dataHolder.getVectorSize(), 0.5, 200));
-        logitBoost.train(trainData);
+        LogitBoost logitBoost = new LogitBoost(1000, () -> new LogisticRegressor(dataHolder.getVectorSize(), 0.5, 10));
+        ClassificationModel classificationModel = new ClassificationModel(logitBoost, doubles -> (int) Math.round(doubles[0]));
+        classificationModel.trainClassified(trainData);
 
-        for (ClassifiedData data : trainData) {
-            System.err.printf("{%s} -> %.5f\n", data.getClassId(), logitBoost.p(data));
+        for (ClassifiedData data : testData) {
+            System.err.printf("{%s} -> %.5f\n", data.getClassId(), classificationModel.output(data)[0]);
         }
     }
 }

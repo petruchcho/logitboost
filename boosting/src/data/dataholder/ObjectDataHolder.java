@@ -1,30 +1,15 @@
-package data;
+package data.dataholder;
 
-import java.io.IOException;
-import java.util.List;
+import data.Data;
+import data.DataReader;
 
-public class DataHolder<T extends Data> {
+public class ObjectDataHolder<T extends Data> extends DataHolder<T> {
 
-    private final DataReader<T> dataReader;
-    private List<T> data;
-
-    public DataHolder(DataReader<T> dataReader) {
-        this.dataReader = dataReader;
-        readData();
+    public ObjectDataHolder(DataReader<T> dataReader, int trainPercent, boolean shuffle) {
+        super(dataReader, trainPercent, shuffle);
     }
 
-    private void readData() {
-        try {
-            data = dataReader.readData();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public List<T> getData() {
-        return data;
-    }
-
+    @Override
     public void normalize() {
         if (data == null || data.isEmpty()) {
             return;
@@ -32,17 +17,18 @@ public class DataHolder<T extends Data> {
         int vectorSize = data.get(0).asVector().length;
         for (int i = 0; i < vectorSize; i++) {
             double sum = 0;
-            for (Data data : data) {
+            for (Data data : this.data) {
                 sum += data.asVector()[i] * data.asVector()[i];
             }
             sum = Math.sqrt(sum);
-            for (Data data : data) {
+            for (Data data : this.data) {
                 double value = data.asVector()[i];
                 data.asVector()[i] = value / sum;
             }
         }
     }
 
+    @Override
     public int getVectorSize() {
         if (data == null || data.isEmpty()) {
             return 0;

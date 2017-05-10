@@ -1,9 +1,10 @@
 package test;
 
 import data.ClassifiedData;
-import data.DataHolder;
+import data.dataholder.DataHolder;
 import data.RegressionData;
 import data.RegressionDataDecorator;
+import data.dataholder.ObjectDataHolder;
 import iris.Iris;
 import iris.IrisReader;
 import learning.regressors.LogisticRegressor;
@@ -17,7 +18,7 @@ public class LogisticRegressorTest {
     private static final int TRAIN_PERCENT = 90;
 
     public static void main(String[] args) {
-        DataHolder<Iris> dataHolder = new DataHolder<>(new IrisReader());
+        DataHolder<Iris> dataHolder = new ObjectDataHolder<>(new IrisReader(), TRAIN_PERCENT, true);
         dataHolder.normalize();
 
         List<RegressionData> trainData = new ArrayList<>();
@@ -56,6 +57,6 @@ public class LogisticRegressorTest {
                 }
             }
         }
-        System.err.printf("orrectly = %.2f\n", 100.0 * correctly / testData.size());
+        System.err.printf("Correctly = %.2f\n", 100.0 * correctly / testData.size());
     }
 }
