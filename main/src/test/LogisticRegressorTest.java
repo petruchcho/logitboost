@@ -18,8 +18,7 @@ public class LogisticRegressorTest {
     private static final int TRAIN_PERCENT = 90;
 
     public static void main(String[] args) {
-        DataHolder<Iris> dataHolder = new ObjectDataHolder<>(new IrisReader(), TRAIN_PERCENT, true);
-        dataHolder.normalize();
+        DataHolder<Iris> dataHolder = new ObjectDataHolder<>(new IrisReader(), TRAIN_PERCENT, true, true);
 
         List<RegressionData> trainData = new ArrayList<>();
         List<ClassifiedData> testData = new ArrayList<>();

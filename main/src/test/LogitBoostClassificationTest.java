@@ -2,6 +2,7 @@ package test;
 
 import data.ClassifiedData;
 import data.dataholder.DataHolder;
+import data.dataholder.ObjectDataHolder;
 import learning.LogitBoost;
 import learning.classification.ClassificationModel;
 import learning.regressors.LogisticRegressor;
@@ -16,8 +17,7 @@ public class LogitBoostClassificationTest {
     private static final int TRAIN_PERCENT = 80;
 
     public static void main(String[] args) {
-        DataHolder<? extends ClassifiedData> dataHolder = new DataHolder<>(new SeedReader(), trainPercent, shuffle);
-        dataHolder.normalize();
+        DataHolder<? extends ClassifiedData> dataHolder = new ObjectDataHolder<>(new SeedReader(), TRAIN_PERCENT, true, false);
 
         List<ClassifiedData> trainData = new ArrayList<>();
         List<ClassifiedData> testData = new ArrayList<>();
@@ -38,9 +38,11 @@ public class LogitBoostClassificationTest {
             }
         }
 
-        LogitBoost logitBoost = new LogitBoost(1000, () -> new LogisticRegressor(dataHolder.getVectorSize(), 0.5, 10));
+        LogitBoost logitBoost = new LogitBoost(() -> new LogisticRegressor(dataHolder.getVectorSize(), 0.5, 10));
         ClassificationModel classificationModel = new ClassificationModel(logitBoost, doubles -> (int) Math.round(doubles[0]));
-        classificationModel.trainClassified(trainData);
+        for (int it = 0; it < 100; it++) {
+            classificationModel.trainClassified(trainData);
+        }
 
         for (ClassifiedData data : testData) {
             System.err.printf("{%s} -> %.5f\n", data.getClassId(), classificationModel.output(data)[0]);

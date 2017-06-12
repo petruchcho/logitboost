@@ -11,17 +11,20 @@ public abstract class DataHolder<T> {
 
     private final DataReader<T> dataReader;
     protected List<T> data;
-    private final int trainPercent;
+    private final double trainPercent;
     private final boolean shuffle;
 
     private List<T> trainData;
     private List<T> testData;
 
-    public DataHolder(DataReader<T> dataReader, int trainPercent, boolean shuffle) {
+    public DataHolder(DataReader<T> dataReader, double trainPercent, boolean normalize, boolean shuffle) {
         this.dataReader = dataReader;
         this.trainPercent = trainPercent;
         this.shuffle = shuffle;
         readData();
+        if (normalize) {
+            normalize();
+        }
         splitData();
     }
 
@@ -62,7 +65,7 @@ public abstract class DataHolder<T> {
         return trainData;
     }
 
-    public abstract void normalize();
+    protected abstract void normalize();
 
     public abstract int getVectorSize();
 }

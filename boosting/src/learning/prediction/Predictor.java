@@ -1,8 +1,7 @@
 package learning.prediction;
 
-import data.Data;
-import learning.model.Model;
+import learning.model.ModelWithTeacher;
 
-public interface Predictor extends Model {
-    double predict(Data data);
+public interface Predictor extends ModelWithTeacher {
+    double predictNext(double[] vector);
 }

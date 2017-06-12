@@ -4,7 +4,7 @@ import data.Data;
 import data.RegressionData;
 import data.RegressionDataPoint;
 import data.WeightedData;
-import learning.model.Model;
+import learning.model.ModelWithTeacher;
 import learning.regressors.Regressor;
 import learning.regressors.RegressorFactory;
 import learning.regressors.WeightedRegressor;
@@ -12,45 +12,41 @@ import learning.regressors.WeightedRegressor;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LogitBoost implements Model {
+public class LogitBoost implements ModelWithTeacher {
 
-    private final int iterations;
     private final RegressorFactory regressorFactory;
 
     private final List<Regressor> weakLearners = new ArrayList<>();
 
-    public LogitBoost(int iterations, RegressorFactory regressorFactory) {
-        this.iterations = iterations;
+    public LogitBoost(RegressorFactory regressorFactory) {
         this.regressorFactory = regressorFactory;
     }
 
     @Override
-    public void train(List<RegressionData> dataSet) {
-        weakLearners.clear();
-        for (int i = 0; i < iterations; i++) {
-            List<RegressionData> regressionData = new ArrayList<>();
+    public void trainAll(List<? extends RegressionData> dataSet) {
+        List<RegressionData> regressionData = new ArrayList<>();
 
-            for (RegressionData data : dataSet) {
-                double p = p(data);
-                double z = (data.output() - p) / (p * (1 - p));
-                double w = p * (1 - p);
-                regressionData.add(new WeightedData(new RegressionDataPoint(data, z), w));
-            }
-
-            WeightedRegressor regressor = new WeightedRegressor(createRegressor());
-            regressor.train(regressionData);
-            regressor.setWeight(0.5);
-            weakLearners.add(regressor);
-
-            if (i % 50 == 0) {
-                System.err.println("Iteration = " + i);
-            }
+        for (RegressionData data : dataSet) {
+            double p = p(data);
+            double z = (data.output() - p) / (p * (1 - p));
+            double w = p * (1 - p);
+            regressionData.add(new WeightedData(new RegressionDataPoint(data, z), w));
         }
+
+        WeightedRegressor regressor = new WeightedRegressor(createRegressor());
+        regressor.train(regressionData);
+        regressor.setWeight(0.5);
+        weakLearners.add(regressor);
+    }
+
+    @Override
+    public void train(RegressionData data) {
+        throw new RuntimeException("Logitboost should know all data set");
     }
 
     @Override
     public double[] output(Data data) {
-        return new double[] {
+        return new double[]{
                 p(data)
         };
     }

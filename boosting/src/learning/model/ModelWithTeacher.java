@@ -5,8 +5,10 @@ import data.RegressionData;
 
 import java.util.List;
 
-public interface Model {
-    void train(List<RegressionData> data);
+public interface ModelWithTeacher {
+    void train(RegressionData data);
+
+    void trainAll(List<? extends RegressionData> data);
 
     double[] output(Data data);
 }
