@@ -11,8 +11,9 @@ class DoubleDataHolder(dataReader: DataReader<Double>, trainPercent: Double, nor
             min = Math.min(x, min)
             max = Math.max(x, max)
         }
-        for (i in 0..data.size - 1) {
-            data[i] = (data[i] - min) / (max - min)
+        data.forEach { x -> x - min }
+        if (min != max) {
+            data.forEach { x -> x / (max - min) }
         }
     }
 

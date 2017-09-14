@@ -6,6 +6,7 @@ import learning.LogitBoost
 import learning.prediction.PredictionModel
 import learning.regressors.LogisticRegressor
 import sinus.SinusReader
+import stupid.ConstantReader
 import java.awt.*
 import java.util.*
 import javax.swing.JComponent
@@ -15,8 +16,10 @@ import javax.swing.WindowConstants
 
 class PredictionTest : JComponent() {
 
-    private val model: PredictionModel
-    private var dataHolder = DoubleDataHolder(SinusReader(0.5, 2000), TRAIN_PERCENT, true, false)
+    private val model: PredictionModel = PredictionModel(LogitBoost { LogisticRegressor(WINDOW_SIZE, 0.5, 1000) })
+    //private val dataHolder = DoubleDataHolder(SinusReader(0.5, 2000), TRAIN_PERCENT, true, false)
+
+    private val dataHolder = DoubleDataHolder(ConstantReader(0.5, 2000), TRAIN_PERCENT, false, false)
 
     private val trainingData = ArrayList<PredictionData>()
     private val testData = ArrayList<PredictionData>()
@@ -25,10 +28,6 @@ class PredictionTest : JComponent() {
 
     init {
         initDataSets()
-
-        val logitBoost = LogitBoost { LogisticRegressor(WINDOW_SIZE, 0.5, 1000) }
-        model = PredictionModel(logitBoost)
-
         trainLoop()
     }
 
