@@ -8,11 +8,7 @@ import utils.RandomUtils
 
 class LogisticRegressor(private val inputSize: Int, private val learningStep: Double, private val iterations: Int) : Regressor {
 
-    private var c: DoubleArray? = null
-
-    init {
-        this.c = DoubleArray(inputSize, { RandomUtils.getInstance().nextDouble() - 0.5 })
-    }
+    private var c: DoubleArray = DoubleArray(inputSize, { RandomUtils.instance.nextDouble() - 0.5 })
 
     override fun train(data: List<RegressionData>) {
         for (iter in 0..iterations - 1) {
