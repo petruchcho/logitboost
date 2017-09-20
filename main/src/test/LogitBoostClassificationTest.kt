@@ -1,26 +1,27 @@
 package test
 
-import data.ClassifiedData
+import data.DataWithResult
 import data.dataholder.ObjectDataHolder
+import iris.Iris
+import iris.IrisReader
 import learning.LogitBoost
-import learning.classification.ClassificationModel
 import learning.regressors.LogisticRegressor
 import seed.SeedReader
 import java.util.*
 
-object LogitBoostClassificationTest {
+object LogitBoostClassificationTest { // TODO Rewrite it
 
     private val TRAIN_PERCENT = 80
 
     @JvmStatic fun main(args: Array<String>) {
         val dataHolder = ObjectDataHolder(SeedReader(), TRAIN_PERCENT.toDouble(), true, false)
 
-        val trainData = ArrayList<ClassifiedData>()
-        val testData = ArrayList<ClassifiedData>()
+        val trainData = ArrayList<DataWithResult>()
+        val testData = ArrayList<DataWithResult>()
 
-        val filteredData = ArrayList<ClassifiedData>()
+        val filteredData = ArrayList<DataWithResult>()
         for (data in dataHolder.data) {
-            if (data.classId != 2) {
+            if (data.result.toInt() != 2) {
                 filteredData.add(data)
             }
         }
@@ -34,14 +35,14 @@ object LogitBoostClassificationTest {
             }
         }
 
-        val logitBoost = LogitBoost { LogisticRegressor(dataHolder.vectorSize, 0.5, 10) }
-        val classificationModel = ClassificationModel(logitBoost) { doubles -> Math.round(doubles[0]).toInt() }
-        for (it in 0..99) {
-            classificationModel.trainClassified(trainData)
+        val logitBoost = LogitBoost { LogisticRegressor(dataHolder.vectorSize, .001, 60) }
+
+        for (it in 0..100) {
+            logitBoost.trainAll(trainData)
         }
 
-        for (data in testData) {
-            System.err.printf("{%s} -> %.5f\n", data.classId, classificationModel.output(data)[0])
+        for (data in trainData) {
+            System.err.printf("{%s} -> %.5f\n", data.result, logitBoost.output(data))
         }
     }
 }

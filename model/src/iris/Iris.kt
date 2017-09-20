@@ -1,8 +1,12 @@
 package iris
 
-import data.ClassifiedData
+import data.DataWithResult
 
-class Iris(sepalLength: Double, sepalWidth: Double, petalLength: Double, petalWidth: Double, private val irisClass: Iris.IrisClass) : ClassifiedData {
+class Iris(sepalLength: Double,
+           sepalWidth: Double,
+           petalLength: Double,
+           petalWidth: Double,
+           private val irisClass: Iris.IrisClass) : DataWithResult(doubleArrayOf(sepalLength, sepalWidth, petalLength, petalWidth), 0.0) {
 
     enum class IrisClass {
         SETOSA,
@@ -10,22 +14,12 @@ class Iris(sepalLength: Double, sepalWidth: Double, petalLength: Double, petalWi
         VIRGINICA
     }
 
-    private val vector: DoubleArray
-
-    init {
-        vector = doubleArrayOf(sepalLength, sepalWidth, petalLength, petalWidth)
-    }
-
-    override fun asVector(): DoubleArray {
-        return vector
-    }
-
-    override val classId: Int
+    override val result: Double
         get() {
             when (irisClass) {
-                Iris.IrisClass.SETOSA -> return 0
-                Iris.IrisClass.VERSICOLOUR -> return 1
-                Iris.IrisClass.VIRGINICA -> return 2
+                Iris.IrisClass.SETOSA -> return 0.0
+                Iris.IrisClass.VERSICOLOUR -> return 1.0
+                Iris.IrisClass.VIRGINICA -> return 2.0
                 else -> throw RuntimeException("Unexpected class")
             }
         }

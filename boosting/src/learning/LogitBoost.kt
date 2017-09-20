@@ -1,46 +1,44 @@
 package learning
 
 import data.Data
-import data.RegressionData
-import data.RegressionDataPoint
+import data.DataWithResult
 import data.WeightedData
 import learning.model.ModelWithTeacher
-import learning.regressors.Regressor
 import learning.regressors.WeightedRegressor
 import java.util.*
 
-class LogitBoost(private val regressorFactory: () -> Regressor) : ModelWithTeacher {
+class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : ModelWithTeacher {
 
-    private val weakLearners = ArrayList<Regressor>()
+    private val weakLearners = ArrayList<ModelWithTeacher>()
 
-    override fun trainAll(data: List<RegressionData>) {
-        val regressionData = ArrayList<RegressionData>()
+    override fun trainAll(data: List<DataWithResult>) {
+        val regressionData = ArrayList<DataWithResult>()
 
         for (point in data) {
             val p = p(point)
-            val z = (point.output() - p) / (p * (1 - p))
+            val z = (point.result - p) / (p * (1 - p))
             val w = p * (1 - p)
-            regressionData.add(WeightedData(RegressionDataPoint(point, z), w))
+            regressionData.add(WeightedData(point.vector, z, w))
         }
 
         val regressor = WeightedRegressor(createRegressor())
-        regressor.train(regressionData)
+        regressor.trainAll(regressionData)
         regressor.setWeight(0.5)
         weakLearners.add(regressor)
     }
 
-    override fun train(data: RegressionData) {
+    override fun train(data: DataWithResult) {
         throw RuntimeException("Logitboost should know all data set")
     }
 
-    override fun output(data: Data): DoubleArray {
-        return doubleArrayOf(p(data))
+    override fun output(data: Data): Double {
+        return p(data)
     }
 
     private fun F(data: Data): Double {
         var sum = 0.0
         for (regressor in weakLearners) {
-            sum += regressor.regress(data)
+            sum += regressor.output(data)
         }
         return sum
     }
@@ -50,7 +48,5 @@ class LogitBoost(private val regressorFactory: () -> Regressor) : ModelWithTeach
         return Math.exp(F) / (Math.exp(F) + Math.exp(-F))
     }
 
-    private fun createRegressor(): Regressor {
-        return regressorFactory()
-    }
+    private fun createRegressor() = weakLearnersFactory()
 }

@@ -1,5 +1,7 @@
 package seed
 
+import data.DataWithResult
+
 
 /**
  * 1. area A,
@@ -11,21 +13,11 @@ package seed
  * 7. length of kernel groove.
  */
 
-class Seed(private val area: Double, private val perimeter: Double, private val compactness: Double, private val kernelLength: Double, private val kernelWidth: Double, private val asymmetryCoefficient: Double, private val kernelGrooveLength: Double, private val newClassId: Int) : data.ClassifiedData {
-
-    private val vector: DoubleArray
-
-    init {
-        this.vector = makeVector()
-    }
-
-    override fun asVector(): DoubleArray {
-        return vector
-    }
-
-    private fun makeVector(): DoubleArray {
-        return doubleArrayOf(area, perimeter, compactness, kernelLength, kernelWidth, asymmetryCoefficient, kernelGrooveLength)
-    }
-
-    override val classId: Int get() = newClassId - 1
-}
+class Seed(area: Double,
+           perimeter: Double,
+           compactness: Double,
+           kernelLength: Double,
+           kernelWidth: Double,
+           asymmetryCoefficient: Double,
+           kernelGrooveLength: Double,
+           newClassId: Int) : DataWithResult(doubleArrayOf(area, perimeter, compactness, kernelLength, kernelWidth, asymmetryCoefficient, kernelGrooveLength), (newClassId - 1).toDouble())
