@@ -16,7 +16,7 @@ class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Mode
 
         for (point in data) {
             val p = p(point)
-            val z = (point.result - p) / (p * (1 - p))
+            val z = if (point.result > 0) 1 / p else -1 / (1 - p)
             val w = p * (1 - p)
             regressionData.add(WeightedData(point.vector, z, w))
         }
@@ -32,7 +32,7 @@ class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Mode
     }
 
     override fun output(data: Data): Double {
-        return p(data)
+        return if (p(data) > 0.5) 1.0 else -1.0
     }
 
     private fun F(data: Data): Double {
