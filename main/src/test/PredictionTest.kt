@@ -56,7 +56,7 @@
 //    }
 //
 //    private fun trainIteration() {
-//        model.trainAll(trainingData)
+//        model.train(trainingData)
 //    }
 //
 //    private fun initDataSets() {

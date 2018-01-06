@@ -35,7 +35,7 @@ class FinanceReader(val valueIndex: Int,
     }
 
     companion object {
-        private val fileName = "resources\\table.csv"
+        private val fileName = "resources\\S&P 500 from 2016-01-04.csv"
         private val ARGUMENTS_SIZE = 6
     }
 }

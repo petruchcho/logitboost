@@ -22,6 +22,10 @@ class RandomUtils private constructor() {
         return random.nextDouble()
     }
 
+    fun nextDouble(maxRange: Double): Double {
+        return nextDouble() * maxRange
+    }
+
     companion object {
 
         val instance = RandomUtils()

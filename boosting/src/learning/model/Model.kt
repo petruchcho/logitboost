@@ -4,9 +4,7 @@ import data.Data
 import data.DataWithResult
 
 interface ModelWithTeacher {
-    fun train(data: DataWithResult)
-
-    fun trainAll(data: List<DataWithResult>)
+    fun train(data: List<DataWithResult>)
 
     fun output(data: Data): Double
 }
@@ -18,12 +16,7 @@ interface Classifier : ModelWithTeacher {
 }
 
 class PredictionModel(private val model: ModelWithTeacher) : ModelWithTeacher {
-
-    override fun trainAll(data: List<DataWithResult>) {
-        model.trainAll(data)
-    }
-
-    override fun train(data: DataWithResult) {
+    override fun train(data: List<DataWithResult>) {
         model.train(data)
     }
 
@@ -37,13 +30,8 @@ class PredictionModel(private val model: ModelWithTeacher) : ModelWithTeacher {
 }
 
 class ClassificationModel(private val model: ModelWithTeacher) : Classifier {
-
-    override fun train(data: DataWithResult) {
+    override fun train(data: List<DataWithResult>) {
         model.train(data)
-    }
-
-    override fun trainAll(data: List<DataWithResult>) {
-        model.trainAll(data)
     }
 
     override fun output(data: Data): Double {

@@ -8,12 +8,8 @@ class WeightedRegressor(private val regressor: ModelWithTeacher) : ModelWithTeac
 
     private var weight = 1.0
 
-    override fun train(data: DataWithResult) {
-        throw UnsupportedOperationException("not implemented")
-    }
-
-    override fun trainAll(data: List<DataWithResult>) {
-        regressor.trainAll(data)
+    override fun train(data: List<DataWithResult>) {
+        regressor.train(data)
     }
 
     override fun output(data: Data): Double {

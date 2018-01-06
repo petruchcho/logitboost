@@ -3,36 +3,38 @@ package learning
 import data.Data
 import data.DataWithResult
 import data.WeightedData
+import data.buildRandomDataSet
+import learning.model.Classifier
 import learning.model.ModelWithTeacher
 import learning.regressors.WeightedRegressor
 import java.util.*
 
-class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : ModelWithTeacher {
+const val DATA_SET_SIZE = 150
+
+class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Classifier {
 
     private val weakLearners = ArrayList<ModelWithTeacher>()
 
-    override fun trainAll(data: List<DataWithResult>) {
-        val regressionData = ArrayList<DataWithResult>()
-
-        for (point in data) {
-            val p = p(point)
-            val z = if (point.result > 0) 1 / p else -1 / (1 - p)
-            val w = p * (1 - p)
-            regressionData.add(WeightedData(point.vector, z, w))
-        }
-
-        val regressor = WeightedRegressor(createRegressor())
-        regressor.trainAll(regressionData)
-        regressor.setWeight(0.5)
-        weakLearners.add(regressor)
+    override fun classify(data: Data): Int {
+        return Math.round(output(data)).toInt()
     }
 
-    override fun train(data: DataWithResult) {
-        throw RuntimeException("Logitboost should know all data set")
+    override fun train(data: List<DataWithResult>) {
+        val weightedData = ArrayList<WeightedData>()
+        for (point in data) {
+            val _y = (point.result + 1) / 2
+            val p = p(point)
+            val w = p * (1 - p)
+            val z = (_y - p) / w
+            weightedData.add(WeightedData(point.vector, z, w))
+        }
+        val weakLearner = createRegressor()
+        weakLearner.train(buildRandomDataSet(weightedData, DATA_SET_SIZE))
+        weakLearners.add(weakLearner)
     }
 
     override fun output(data: Data): Double {
-        return if (p(data) > 0.5) 1.0 else -1.0
+        return F(data)
     }
 
     private fun F(data: Data): Double {
@@ -40,7 +42,7 @@ class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Mode
         for (regressor in weakLearners) {
             sum += regressor.output(data)
         }
-        return sum
+        return sum * 0.5
     }
 
     private fun p(x: Data): Double {

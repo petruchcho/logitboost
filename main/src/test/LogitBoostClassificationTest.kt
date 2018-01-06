@@ -38,7 +38,7 @@ object LogitBoostClassificationTest { // TODO Rewrite it
         val logitBoost = LogitBoost { LogisticRegressor(dataHolder.vectorSize, .001, 60) }
 
         for (it in 0..100) {
-            logitBoost.trainAll(trainData)
+            logitBoost.train(trainData)
         }
 
         for (data in trainData) {

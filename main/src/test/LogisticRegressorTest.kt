@@ -33,7 +33,7 @@ object LogisticRegressorTest {
         }
 
         val regressor = LogisticRegressor(dataHolder.vectorSize, 0.001, 30)
-        regressor.trainAll(trainData)
+        regressor.train(trainData)
 
         var correctly = 0
         for (data in testData) {

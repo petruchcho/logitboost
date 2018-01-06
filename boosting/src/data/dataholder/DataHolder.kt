@@ -4,7 +4,10 @@ import data.DataReader
 import java.io.IOException
 import java.util.*
 
-abstract class DataHolder<T>(private val dataReader: DataReader<T>, private val trainPercent: Double, normalize: Boolean, shuffle: Boolean) {
+abstract class DataHolder<T>(private val dataReader: DataReader<T>,
+                             private val trainPercent: Double,
+                             normalize: Boolean,
+                             shuffle: Boolean) {
 
     val data: MutableList<T> = ArrayList()
 
