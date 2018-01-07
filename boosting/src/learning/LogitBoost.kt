@@ -6,10 +6,9 @@ import data.WeightedData
 import data.buildRandomDataSet
 import learning.model.Classifier
 import learning.model.ModelWithTeacher
-import learning.regressors.WeightedRegressor
 import java.util.*
 
-const val DATA_SET_SIZE = 150
+const val DATA_SET_SIZE = 200
 
 class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Classifier {
 
@@ -22,14 +21,27 @@ class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Clas
     override fun train(data: List<DataWithResult>) {
         val weightedData = ArrayList<WeightedData>()
         for (point in data) {
-            val _y = (point.result + 1) / 2
             val p = p(point)
-            val w = p * (1 - p)
-            val z = (_y - p) / w
+
+            val w = Math.max(p * (1 - p), 2e-15)
+
+            var z = if (point.result > 0) 1 / p else -1 / (1 - p)
+
+            if (z < 0) {
+                z = Math.max(-.06, z)
+            } else {
+                z = Math.min(.06, z)
+            }
+
+            if (!w.isFinite()) {
+                throw RuntimeException()
+            }
             weightedData.add(WeightedData(point.vector, z, w))
         }
         val weakLearner = createRegressor()
-        weakLearner.train(buildRandomDataSet(weightedData, DATA_SET_SIZE))
+        //weightedData.sortByDescending { w -> w.weight }
+        //weakLearner.train(weightedData.subList(0, DATA_SET_SIZE))
+        weakLearner.train(weightedData)
         weakLearners.add(weakLearner)
     }
 
@@ -46,8 +58,11 @@ class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Clas
     }
 
     private fun p(x: Data): Double {
-        val F = F(x)
-        return Math.exp(F) / (Math.exp(F) + Math.exp(-F))
+        val fx = F(x)
+        val efx = Math.exp(fx)
+        val enfx = Math.exp(-fx)
+        if (efx.isInfinite() && efx > 0 && enfx < 1e-15) return 1.0
+        return efx / (efx + enfx)
     }
 
     private fun createRegressor() = weakLearnersFactory()

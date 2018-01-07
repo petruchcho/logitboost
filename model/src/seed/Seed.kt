@@ -20,4 +20,4 @@ class Seed(area: Double,
            kernelWidth: Double,
            asymmetryCoefficient: Double,
            kernelGrooveLength: Double,
-           newClassId: Int) : DataWithResult(doubleArrayOf(area, perimeter, compactness, kernelLength, kernelWidth, asymmetryCoefficient, kernelGrooveLength), (newClassId - 1).toDouble())
+           newClassId: Int) : DataWithResult(doubleArrayOf(area, perimeter, compactness, kernelLength, kernelWidth, asymmetryCoefficient, kernelGrooveLength), newClassId.toDouble())

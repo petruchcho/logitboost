@@ -37,12 +37,13 @@ fun buildRandomDataSet(data: List<WeightedData>, size: Int): List<WeightedData> 
 }
 
 fun randomElement(data: List<WeightedData>, weightSum: Double): WeightedData {
-    var random = RandomUtils.instance.nextDouble(weightSum)
-    for (d in data) {
-        random -= d.weight
-        if (random < 0) {
-            return d
-        }
-    }
-    return data.last()
+//    var random = RandomUtils.instance.nextDouble(weightSum)
+//    for (d in data) {
+//        random -= d.weight
+//        if (random < 0) {
+//            return d
+//        }
+//    }
+//    return data.last()
+    return data[RandomUtils.instance.nextInt(data.size)]
 }

@@ -17,7 +17,7 @@ class SeedReader : DataReader<Seed> {
                 seeds.add(readSeed(tokenizer))
             }
         }
-        return seeds
+        return seeds.filter { seed -> Math.abs(seed.result) > 0.1  }
     }
 
     private fun readSeed(tokenizer: StringTokenizer): Seed {
@@ -28,7 +28,11 @@ class SeedReader : DataReader<Seed> {
         val kernelWidth = java.lang.Double.parseDouble(tokenizer.nextToken())
         val asymmetryCoefficient = java.lang.Double.parseDouble(tokenizer.nextToken())
         val kernelGrooveLength = java.lang.Double.parseDouble(tokenizer.nextToken())
-        val classId = Integer.parseInt(tokenizer.nextToken())
+        val classId = when (Integer.parseInt(tokenizer.nextToken())) {
+            1 -> 1
+            2 -> 0
+            else -> -1
+        }
 
         return Seed(
                 area,
