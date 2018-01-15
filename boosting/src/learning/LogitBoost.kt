@@ -3,16 +3,16 @@ package learning
 import data.Data
 import data.DataWithResult
 import data.WeightedData
-import data.buildRandomDataSet
 import learning.model.Classifier
 import learning.model.ModelWithTeacher
 import java.util.*
 
-const val DATA_SET_SIZE = 200
-
 class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Classifier {
 
     private val weakLearners = ArrayList<ModelWithTeacher>()
+    private val Z_MAX = 0.06
+
+    var logitFunction = defaultLogitFunction
 
     override fun classify(data: Data): Int {
         return Math.round(output(data)).toInt()
@@ -28,9 +28,9 @@ class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Clas
             var z = if (point.result > 0) 1 / p else -1 / (1 - p)
 
             if (z < 0) {
-                z = Math.max(-.06, z)
+                z = Math.max(-Z_MAX, z)
             } else {
-                z = Math.min(.06, z)
+                z = Math.min(Z_MAX, z)
             }
 
             if (!w.isFinite()) {
@@ -58,12 +58,43 @@ class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Clas
     }
 
     private fun p(x: Data): Double {
-        val fx = F(x)
-        val efx = Math.exp(fx)
-        val enfx = Math.exp(-fx)
-        if (efx.isInfinite() && efx > 0 && enfx < 1e-15) return 1.0
-        return efx / (efx + enfx)
+        return logitFunction(F(x))
     }
 
     private fun createRegressor() = weakLearnersFactory()
 }
+
+val defaultLogitFunction = { x: Double ->
+    val efx = Math.exp(x)
+    val enfx = Math.exp(-x)
+
+    if (efx.isInfinite() && efx > 0 && enfx < 1e-15) {
+        1.0
+    } else if (enfx.isInfinite()) {
+        0.0
+    } else {
+        if (efx.isNaN() || enfx.isNaN() || efx.isInfinite() || enfx.isInfinite()) {
+            throw RuntimeException("" + efx + " " + enfx)
+        }
+        efx / (efx + enfx)
+    }
+}
+
+fun floorLogitFunctionSingleC(c: Double): ((Double) -> Double) {
+    return {
+        c + (1 - c) * defaultLogitFunction(it)
+    }
+}
+
+fun ceilLogitFunctionSingleC(c: Double): ((Double) -> Double) {
+    return {
+        (1 - c) * defaultLogitFunction(it)
+    }
+}
+
+fun bothLogitFunctionSingleC(c: Double): ((Double) -> Double) {
+    return {
+        c + (1 - 2 * c) * defaultLogitFunction(it)
+    }
+}
+

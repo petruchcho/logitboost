@@ -3,7 +3,7 @@ package data.dataholder
 import data.Data
 import data.DataReader
 
-class ObjectDataHolder<T : Data>(dataReader: DataReader<T>, trainPercent: Double, normalize: Boolean, shuffle: Boolean) : DataHolder<T>(dataReader, trainPercent, normalize, shuffle) {
+open class ObjectDataHolder<T : Data>(dataReader: DataReader<T>, trainPercent: Double, normalize: Boolean, shuffle: Boolean, override val maxSize: Int = Int.MAX_VALUE) : DataHolder<T>(dataReader, trainPercent, normalize, shuffle, maxSize) {
 
     override fun normalize() {
         for (i in 0..vectorSize - 1) {

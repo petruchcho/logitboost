@@ -1,29 +1,64 @@
 package test
 
 import data.DataWithResult
+import data.dataholder.ClassifiedDataHolder
 import data.dataholder.ObjectDataHolder
 import data.deductionsConverter
-import data.windowCoverter
+import data.windowConverter
 import finance.FinanceReader
-import learning.LogitBoost
+import learning.*
 import learning.model.ModelWithTeacher
 import learning.regressors.LeastSquareRegressor
-import seed.SeedReader
+import java.io.PrintWriter
 
 const val WINDOW_SIZE = 14
-const val TRAIN_PERCENT = 85
 
-//val reader = SeedReader()
+const val TRAIN_PERCENT = 60
+const val VALIDATION_PERCENT = 20
 
-val reader = FinanceReader(0, windowCoverter(WINDOW_SIZE, deductionsConverter))
-val dataHolder = ObjectDataHolder(reader, TRAIN_PERCENT.toDouble(), normalize = false, shuffle = true)
+const val ITERATIONS = 800
+
+val reader = FinanceReader(windowConverter(WINDOW_SIZE, deductionsConverter))
+val dataHolder = ClassifiedDataHolder(reader, TRAIN_PERCENT.toDouble(), normalize = false, shuffle = true, validationPercent = VALIDATION_PERCENT)
 
 fun main(args: Array<String>) {
-    val logitBoost = LogitBoost { LeastSquareRegressor() }
 
-    for (iterations in 0..2000) {
-        logitBoost.train(dataHolder.getTrainData())
-        println(calcError(logitBoost, dataHolder.getTestData()))
+    dataHolder.init()
+
+    println(dataHolder.data.size)
+    println(dataHolder.trainData.size)
+    println(dataHolder.testData.size)
+    println(dataHolder.validationData.size)
+
+//    runLogitBoost("default", logitFunction = defaultLogitFunction)
+//
+//    runLogitBoost("floor c = 0.001", logitFunction = floorLogitFunctionSingleC(0.001))
+//    runLogitBoost("floor c = 0.01", logitFunction = floorLogitFunctionSingleC(0.01))
+//    runLogitBoost("floor c = 0.25", logitFunction = floorLogitFunctionSingleC(0.25))
+//    runLogitBoost("floor c = 0.5", logitFunction = floorLogitFunctionSingleC(0.5))
+//
+//    runLogitBoost("ceil c = 0.001", logitFunction = ceilLogitFunctionSingleC(0.001))
+//    runLogitBoost("ceil c = 0.01", logitFunction = ceilLogitFunctionSingleC(0.01))
+//    runLogitBoost("ceil c = 0.25", logitFunction = ceilLogitFunctionSingleC(0.25))
+//    runLogitBoost("ceil c = 0.5", logitFunction = ceilLogitFunctionSingleC(0.5))
+//
+//    runLogitBoost("both c = 0.001", logitFunction = bothLogitFunctionSingleC(0.001))
+//    runLogitBoost("both c = 0.01", logitFunction = bothLogitFunctionSingleC(0.01))
+//    runLogitBoost("both c = 0.25", logitFunction = bothLogitFunctionSingleC(0.25))
+//    runLogitBoost("both c = 0.5", logitFunction = bothLogitFunctionSingleC(0.5))
+}
+
+fun runLogitBoost(name: String, logitFunction: ((Double) -> Double)) {
+    val logitBoost = LogitBoost { LeastSquareRegressor() }
+    logitBoost.logitFunction = logitFunction
+    PrintWriter(name + ".txt").use { out ->
+        for (iterations in 0..ITERATIONS) {
+            if (iterations % 100 == 0) {
+                System.err.println("$name $iterations/$ITERATIONS iterations completed")
+            }
+            logitBoost.train(dataHolder.trainData)
+            out.println(calcError(logitBoost, dataHolder.trainData))
+        }
     }
 }
 
