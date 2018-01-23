@@ -28,9 +28,9 @@ class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Clas
             var z = if (point.result > 0) 1 / p else -1 / (1 - p)
 
             if (z < 0) {
-                z = Math.max(-Z_MAX, z)
+                z = Math.max(-Z_MAX.toDouble(), z)
             } else {
-                z = Math.min(Z_MAX, z)
+                z = Math.min(Z_MAX.toDouble(), z)
             }
 
             if (!w.isFinite()) {
@@ -39,8 +39,6 @@ class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Clas
             weightedData.add(WeightedData(point.vector, z, w))
         }
         val weakLearner = createRegressor()
-        //weightedData.sortByDescending { w -> w.weight }
-        //weakLearner.train(weightedData.subList(0, DATA_SET_SIZE))
         weakLearner.train(weightedData)
         weakLearners.add(weakLearner)
     }
@@ -70,12 +68,10 @@ val defaultLogitFunction = { x: Double ->
 
     if (efx.isInfinite() && efx > 0 && enfx < 1e-15) {
         1.0
-    } else if (enfx.isInfinite()) {
-        0.0
     } else {
-        if (efx.isNaN() || enfx.isNaN() || efx.isInfinite() || enfx.isInfinite()) {
-            throw RuntimeException("" + efx + " " + enfx)
-        }
+//        if (efx.isNaN() || enfx.isNaN() || efx.isInfinite() || enfx.isInfinite()) {
+//            throw RuntimeException("" + efx + " " + enfx)
+//        }
         efx / (efx + enfx)
     }
 }
@@ -95,6 +91,12 @@ fun ceilLogitFunctionSingleC(c: Double): ((Double) -> Double) {
 fun bothLogitFunctionSingleC(c: Double): ((Double) -> Double) {
     return {
         c + (1 - 2 * c) * defaultLogitFunction(it)
+    }
+}
+
+fun bothLogitFunction(cg: Double, cf: Double): ((Double) -> Double) {
+    return {
+        cg + (1 - (cg + cf)) * defaultLogitFunction(it)
     }
 }
 
