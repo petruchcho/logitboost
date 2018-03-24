@@ -2,14 +2,11 @@ package data
 
 import java.util.*
 
-open class Data(open val vector: DoubleArray) {
-}
+open class Data(open val vector: DoubleArray)
 
-open class DataWithResult(vector: DoubleArray, open val result: Double) : Data(vector) {
-}
+open class DataWithResult(vector: DoubleArray, open val result: Double) : Data(vector)
 
-class WeightedData(vector: DoubleArray, result: Double, var weight: Double = 1.0) : DataWithResult(vector, result) {
-}
+class WeightedData(vector: DoubleArray, result: Double, var weight: Double = 1.0) : DataWithResult(vector, result)
 
 fun windowConverter(windowSize: Int, firstApply: (List<Double>) -> List<Double>) = { list: List<Double> ->
     val result = ArrayList<DataWithResult>()
@@ -32,7 +29,7 @@ fun splitToMap(data: List<DataWithResult>): List<List<DataWithResult>> {
         val key = Math.round(d.result).toInt()
         var list = map[key]
         if (list == null) {
-            list = ArrayList<DataWithResult>()
+            list = ArrayList()
             map.put(key, list)
         }
         list.add(d)

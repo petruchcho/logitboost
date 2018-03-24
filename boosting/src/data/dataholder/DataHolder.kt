@@ -15,9 +15,12 @@ abstract class DataHolder<T>(private val dataReader: DataReader<T>,
 
     val trainData: MutableList<T> = ArrayList()
     val testData: MutableList<T> = ArrayList()
-    val validationData: MutableList<T> = ArrayList()
 
     fun init(): DataHolder<T> {
+        data.clear()
+        trainData.clear()
+        testData.clear()
+
         readData()
         postRead()
 
@@ -31,7 +34,6 @@ abstract class DataHolder<T>(private val dataReader: DataReader<T>,
             Collections.shuffle(data)
             Collections.shuffle(trainData)
             Collections.shuffle(testData)
-            Collections.shuffle(validationData)
         }
 
         return this
@@ -53,9 +55,11 @@ abstract class DataHolder<T>(private val dataReader: DataReader<T>,
     private fun readData() {
         try {
             val data = dataReader.readData()
+            Collections.shuffle(data)
+            this.data.clear()
             this.data.addAll(data.subList(0, Math.min(data.size, maxSize)))
         } catch (e: IOException) {
-            System.err.print("Fail in readData = " + e)
+            System.err.print("Fail in readData = $e")
         }
     }
 

@@ -3,6 +3,7 @@ package learning.regressors
 import data.Data
 import data.DataWithResult
 import data.WeightedData
+import javafx.application.Application.launch
 import learning.model.ModelWithTeacher
 import org.ejml.LinearSolverSafe
 import org.ejml.data.DMatrixRMaj

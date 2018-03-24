@@ -1,43 +1,51 @@
-package test
+package main.test
 
-import data.*
+import data.DataWithResult
 import data.dataholder.ClassifiedDataHolder
+import data.deductionsConverter
+import data.splitDataWithPercent
+import data.windowConverter
 import finance.FinanceReader
+import kotlinx.coroutines.experimental.*
 import learning.LogitBoost
 import learning.bothLogitFunction
-import learning.ceilLogitFunctionSingleC
 import learning.defaultLogitFunction
+import learning.floorLogitFunctionSingleC
 import learning.model.ModelWithTeacher
 import learning.regressors.LeastSquareRegressor
 import java.io.PrintWriter
-import java.util.*
-
-const val WINDOW_SIZE = 40
 
 const val TRAIN_PERCENT = 80
 const val VALIDATION_PERCENT = 25
-const val C_STEP = 0.001
+const val C_STEP = 0.01
 
 const val VALIDATION_ITERATIONS = 4
-const val ITERATIONS = 250
+
+const val ITERATIONS = 320
+const val Z_MAX = 0.08
+const val WINDOW_SIZE = 28
 
 val reader = FinanceReader(windowConverter(WINDOW_SIZE, deductionsConverter))
-val dataHolder = ClassifiedDataHolder(reader, TRAIN_PERCENT.toDouble(), normalize = false, shuffle = true, maxSize = 5000)
+val dataHolder = ClassifiedDataHolder(reader, TRAIN_PERCENT.toDouble(), normalize = false, shuffle = true)
 
 fun main(args: Array<String>) {
 
-    dataHolder.init()
+    for (i in 0 until 10) {
+        println("Here we are at $i")
 
-//    val defaultLogitBoost = makeLogitBoost()
-//    testLogitBoost(defaultLogitBoost, dataHolder.trainData, dataHolder.testData, "default", ITERATIONS)
+        dataHolder.init() // it will reshuffle everything
 
-    //val (cg, cf) = crossValidateCgCf()
-    val boostedLogitBoost = makeLogitBoost(getLogitFunction(0.062, 0.013))
-    testLogitBoost(boostedLogitBoost, dataHolder.trainData, dataHolder.testData, "boosted", ITERATIONS)
+        val defaultLogitBoost = makeLogitBoost()
+        testLogitBoost(defaultLogitBoost, dataHolder.trainData, dataHolder.testData, "default-$i", ITERATIONS)
+
+        val (cg, cf) = crossValidateCgCf()
+        val boostedLogitBoost = makeLogitBoost(getLogitFunction(cf, cg))
+        testLogitBoost(boostedLogitBoost, dataHolder.trainData, dataHolder.testData, "boosted-$i-[$cg, $cf]", ITERATIONS)
+    }
 }
 
 fun getLogitFunction(c: Double): ((Double) -> Double) {
-    return ceilLogitFunctionSingleC(c)
+    return floorLogitFunctionSingleC(c)
 }
 
 fun getLogitFunction(cg: Double, cf: Double): ((Double) -> Double) {
@@ -45,7 +53,7 @@ fun getLogitFunction(cg: Double, cf: Double): ((Double) -> Double) {
 }
 
 fun makeLogitBoost(logitFunction: ((Double) -> Double) = defaultLogitFunction): LogitBoost {
-    val logitBoost = LogitBoost { LeastSquareRegressor() }
+    val logitBoost = LogitBoost(Z_MAX) { LeastSquareRegressor() }
     logitBoost.logitFunction = logitFunction
     return logitBoost
 }
@@ -58,9 +66,9 @@ fun crossValidateC(): Double {
     while (c <= 0.25) {
         System.err.println("test c = $c")
         var sumQuality = 0.0
-        for (it in 0..VALIDATION_ITERATIONS - 1) {
+        for (it in 0 until VALIDATION_ITERATIONS) {
             System.err.println("test c = $c, validation iteration = $it")
-            Collections.shuffle(dataHolder.trainData)
+            dataHolder.trainData.shuffle()
             val (trainData, validationData) = splitDataWithPercent(dataHolder.trainData, VALIDATION_PERCENT.toDouble())
             val logitBoost = makeLogitBoost(getLogitFunction(c))
             trainLogitBoost(logitBoost, trainData)
@@ -83,31 +91,43 @@ fun crossValidateCgCf(): Pair<Double, Double> {
     var bestC = Pair(0.0, 0.0)
     var bestQuality = 0.0
 
-    var cg = 0.0
-    while (cg <= 0.25) {
-        var cf = 0.0
-        while (cf <= 0.25) {
-            System.err.println("test cg = $cg, cf = $cf")
-            var sumQuality = 0.0
-            for (it in 0..VALIDATION_ITERATIONS - 1) {
-                System.err.println("validation iteration = $it")
-                Collections.shuffle(dataHolder.trainData)
-                val (trainData, validationData) = splitDataWithPercent(dataHolder.trainData, VALIDATION_PERCENT.toDouble())
-                val logitBoost = makeLogitBoost(getLogitFunction(cg, cf))
-                trainLogitBoost(logitBoost, trainData)
-                sumQuality += calcQuality(logitBoost, validationData)
-            }
-            val avgQuality = sumQuality / VALIDATION_ITERATIONS
-            if (bestQuality < avgQuality) {
-                System.err.println("new best quality = $avgQuality with cg = $cg, cf = $cf")
-                bestQuality = avgQuality
-                bestC = Pair(cg, cf)
-            }
+    runBlocking {
+        val jobs = ArrayList<Job>()
+        var cg = 0.0
+        while (cg <= 0.25) {
+            var cf = 0.0
+            while (cf <= 0.25) {
 
-            cf += C_STEP
+                dataHolder.trainData.shuffle()
+                val (trainData, validationData) = splitDataWithPercent(dataHolder.trainData, VALIDATION_PERCENT.toDouble())
+                val _cg = cg
+                val _cf = cf
+
+                jobs.add(launch {
+                    System.err.println("test cg = $_cg, cf = $_cf")
+                    var sumQuality = 0.0
+                    for (it in 0 until VALIDATION_ITERATIONS) {
+                        //System.err.println("validation iteration = $it")
+                        val logitBoost = makeLogitBoost(getLogitFunction(_cg, _cf))
+                        trainLogitBoost(logitBoost, trainData)
+                        sumQuality += calcQuality(logitBoost, validationData)
+                    }
+                    val avgQuality = sumQuality / VALIDATION_ITERATIONS
+                    if (bestQuality < avgQuality) {
+                        System.err.println("new best quality = $avgQuality with cg = $_cg, cf = $_cf")
+                        bestQuality = avgQuality
+                        bestC = Pair(_cg, _cf)
+                    }
+                })
+
+                cf += C_STEP
+            }
+            cg += C_STEP
         }
-        cg += C_STEP
+
+        jobs.forEach { job -> job.join() }
     }
+
     System.err.println("best c = $bestC")
     return bestC
 }
@@ -120,8 +140,8 @@ fun trainLogitBoost(logitBoost: LogitBoost, trainData: List<DataWithResult>): Lo
 }
 
 fun testLogitBoost(logitBoost: LogitBoost, trainData: List<DataWithResult>, testData: List<DataWithResult>, filename: String, iterations: Int): LogitBoost {
-    PrintWriter(filename + "train.txt").use { out ->
-        for (iteration in 0..iterations - 1) {
+    PrintWriter("$filename.txt").use { out ->
+        for (iteration in 0 until iterations) {
             if (iteration % 100 == 0) {
                 System.err.println("$filename $iteration/$iterations iterations completed")
             }

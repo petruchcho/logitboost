@@ -26,7 +26,13 @@ class FinanceReader(val apply: (List<Double>) -> List<DataWithResult>) : DataRea
     }
 }
 
-val RUB_USD = Source("resources\\USD RUB 5 years daily.csv", investmentsConverter(5))
+val RUB_USD = Source("resources\\USD RUB 5 years daily.csv", investmentsConverter(5, 0)) // Z_MAX = 0.06, WINDOW_SIZE = 80
+
+val GOLD_1 = Source("resources\\Gold Futures 1 year.csv", investmentsConverter(6, 0))
+val GOLD_2 = Source("resources\\Gold Futures 2 years.csv", investmentsConverter(6, 0))
+val GOLD_4 = Source("resources\\Gold Futures 4 years.csv", investmentsConverter(6, 0))
+val GOLD_8 = Source("resources\\Gold Futures 8 years.csv", investmentsConverter(6, 0))
+
 val S_P_500 = Source("resources\\S&P 500 from 2016-01-04.csv", yahooConverter(7, 1))
 val BITCOIN = Source("resources\\bitcoin.csv", yahooConverter(8, 7))
 
@@ -43,16 +49,20 @@ fun yahooConverter(arguments: Int, id: Int = 0) = { line: String ->
     res
 }
 
-fun investmentsConverter(arguments: Int) = { line: String ->
-    val tokenizer = StringTokenizer(line.replace("\"", ""), " ,")
+fun investmentsConverter(arguments: Int, id: Int) = { line: String ->
+    val tokenizer = StringTokenizer(line.replace(",", "").replace("\"", " "), " ,")
     tokenizer.nextToken()
     tokenizer.nextToken()
     tokenizer.nextToken()
-    val values = DoubleArray(arguments)
+    var res = 0.0
     for (i in 0..arguments - 1) {
-        values[i] = java.lang.Double.parseDouble(tokenizer.nextToken())
+        if (i == id) {
+            res = java.lang.Double.parseDouble(tokenizer.nextToken())
+        } else {
+            tokenizer.nextToken()
+        }
     }
-    values[0]
+    res
 }
 
 class Source(val filename: String, val converter: (String) -> Double) {

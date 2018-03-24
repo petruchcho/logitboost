@@ -7,10 +7,9 @@ import learning.model.Classifier
 import learning.model.ModelWithTeacher
 import java.util.*
 
-class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Classifier {
+class LogitBoost(private val Z_MAX: Double = 0.06, private val weakLearnersFactory: () -> ModelWithTeacher) : Classifier {
 
     private val weakLearners = ArrayList<ModelWithTeacher>()
-    private val Z_MAX = 0.06
 
     var logitFunction = defaultLogitFunction
 
@@ -27,10 +26,10 @@ class LogitBoost(private val weakLearnersFactory: () -> ModelWithTeacher) : Clas
 
             var z = if (point.result > 0) 1 / p else -1 / (1 - p)
 
-            if (z < 0) {
-                z = Math.max(-Z_MAX.toDouble(), z)
+            z = if (z < 0) {
+                Math.max(-Z_MAX, z)
             } else {
-                z = Math.min(Z_MAX.toDouble(), z)
+                Math.min(Z_MAX, z)
             }
 
             if (!w.isFinite()) {
