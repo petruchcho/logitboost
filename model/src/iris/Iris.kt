@@ -16,11 +16,10 @@ class Iris(sepalLength: Double,
 
     override val result: Double
         get() {
-            when (irisClass) {
-                Iris.IrisClass.SETOSA -> return 0.0
-                Iris.IrisClass.VERSICOLOUR -> return 1.0
-                Iris.IrisClass.VIRGINICA -> return 2.0
-                else -> throw RuntimeException("Unexpected class")
+            return when (irisClass) {
+                Iris.IrisClass.SETOSA -> 0.0
+                Iris.IrisClass.VERSICOLOUR -> 1.0
+                Iris.IrisClass.VIRGINICA -> 2.0
             }
         }
 }

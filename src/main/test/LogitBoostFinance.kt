@@ -5,14 +5,16 @@ import data.dataholder.ClassifiedDataHolder
 import data.deductionsConverter
 import data.splitDataWithPercent
 import data.windowConverter
-import finance.FinanceReader
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 import learning.LogitBoost
 import learning.bothLogitFunction
 import learning.defaultLogitFunction
 import learning.floorLogitFunctionSingleC
 import learning.model.ModelWithTeacher
 import learning.regressors.LeastSquareRegressor
+import timeline.TimelineReader
 import java.io.PrintWriter
 
 const val TRAIN_PERCENT = 80
@@ -21,26 +23,27 @@ const val C_STEP = 0.01
 
 const val VALIDATION_ITERATIONS = 4
 
-const val ITERATIONS = 320
-const val Z_MAX = 0.08
-const val WINDOW_SIZE = 28
+const val FULL_ITERATIONS = 300
+const val CROSS_VALIDATION_ITERATIONS = 200
+const val Z_MAX = 0.04
+const val WINDOW_SIZE = 15
 
-val reader = FinanceReader(windowConverter(WINDOW_SIZE, deductionsConverter))
+val reader = TimelineReader(timeline.BITCOIN, windowConverter(WINDOW_SIZE, deductionsConverter), 1000)
 val dataHolder = ClassifiedDataHolder(reader, TRAIN_PERCENT.toDouble(), normalize = false, shuffle = true)
 
 fun main(args: Array<String>) {
 
-    for (i in 0 until 10) {
-        println("Here we are at $i")
+    for (i in 0 until 8) {
+        println("Here we are at ${i+1}")
 
         dataHolder.init() // it will reshuffle everything
 
         val defaultLogitBoost = makeLogitBoost()
-        testLogitBoost(defaultLogitBoost, dataHolder.trainData, dataHolder.testData, "default-$i", ITERATIONS)
+        testLogitBoost(defaultLogitBoost, dataHolder.trainData, dataHolder.testData, "default-${i+1}", FULL_ITERATIONS)
 
         val (cg, cf) = crossValidateCgCf()
         val boostedLogitBoost = makeLogitBoost(getLogitFunction(cf, cg))
-        testLogitBoost(boostedLogitBoost, dataHolder.trainData, dataHolder.testData, "boosted-$i-[$cg, $cf]", ITERATIONS)
+        testLogitBoost(boostedLogitBoost, dataHolder.trainData, dataHolder.testData, "boosted-${i+1}-[$cg, $cf]", FULL_ITERATIONS)
     }
 }
 
@@ -53,7 +56,7 @@ fun getLogitFunction(cg: Double, cf: Double): ((Double) -> Double) {
 }
 
 fun makeLogitBoost(logitFunction: ((Double) -> Double) = defaultLogitFunction): LogitBoost {
-    val logitBoost = LogitBoost(Z_MAX) { LeastSquareRegressor() }
+    val logitBoost = LogitBoost(Z_MAX.toDouble()) { LeastSquareRegressor() }
     logitBoost.logitFunction = logitFunction
     return logitBoost
 }
@@ -71,7 +74,7 @@ fun crossValidateC(): Double {
             dataHolder.trainData.shuffle()
             val (trainData, validationData) = splitDataWithPercent(dataHolder.trainData, VALIDATION_PERCENT.toDouble())
             val logitBoost = makeLogitBoost(getLogitFunction(c))
-            trainLogitBoost(logitBoost, trainData)
+            trainLogitBoost(logitBoost, trainData, CROSS_VALIDATION_ITERATIONS)
             sumQuality += calcQuality(logitBoost, validationData)
         }
         val avgQuality = sumQuality / VALIDATION_ITERATIONS
@@ -107,9 +110,8 @@ fun crossValidateCgCf(): Pair<Double, Double> {
                     System.err.println("test cg = $_cg, cf = $_cf")
                     var sumQuality = 0.0
                     for (it in 0 until VALIDATION_ITERATIONS) {
-                        //System.err.println("validation iteration = $it")
                         val logitBoost = makeLogitBoost(getLogitFunction(_cg, _cf))
-                        trainLogitBoost(logitBoost, trainData)
+                        trainLogitBoost(logitBoost, trainData, CROSS_VALIDATION_ITERATIONS)
                         sumQuality += calcQuality(logitBoost, validationData)
                     }
                     val avgQuality = sumQuality / VALIDATION_ITERATIONS
@@ -132,8 +134,8 @@ fun crossValidateCgCf(): Pair<Double, Double> {
     return bestC
 }
 
-fun trainLogitBoost(logitBoost: LogitBoost, trainData: List<DataWithResult>): LogitBoost {
-    for (iterations in 0..ITERATIONS) {
+fun trainLogitBoost(logitBoost: LogitBoost, trainData: List<DataWithResult>, iterations: Int): LogitBoost {
+    for (iteration in 0 until iterations) {
         logitBoost.train(trainData)
     }
     return logitBoost

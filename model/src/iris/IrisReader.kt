@@ -25,11 +25,10 @@ class IrisReader : DataReader<Iris> {
         val sepalWidth = java.lang.Double.parseDouble(tokenizer.nextToken())
         val petalLength = java.lang.Double.parseDouble(tokenizer.nextToken())
         val petalWidth = java.lang.Double.parseDouble(tokenizer.nextToken())
-        val irisClass: Iris.IrisClass
-        when (tokenizer.nextToken()) {
-            "Iris-setosa" -> irisClass = Iris.IrisClass.SETOSA
-            "Iris-versicolor" -> irisClass = Iris.IrisClass.VERSICOLOUR
-            "Iris-virginica" -> irisClass = Iris.IrisClass.VIRGINICA
+        val irisClass: Iris.IrisClass = when (tokenizer.nextToken()) {
+            "Iris-setosa" -> Iris.IrisClass.SETOSA
+            "Iris-versicolor" -> Iris.IrisClass.VERSICOLOUR
+            "Iris-virginica" -> Iris.IrisClass.VIRGINICA
             else -> throw RuntimeException("Unexpected class")
         }
         return Iris(
